@@ -14,7 +14,7 @@ contract TokenVault is ERC4626 {
 
 	constructor(IERC20 _asset, 
 							IPool _aavePool	
-						 ) ERC4626(_asset) ERC20("Token de rendimento aave", "aUSDC"){
+						 ) ERC4626(_asset) ERC20("USDC Yield Vault", "shareUSDC"){
 								aavePool = _aavePool;
 							}
  

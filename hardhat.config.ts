@@ -12,7 +12,7 @@ export default defineConfig({
 	networks: {
 		hardhatMainnet: {
 			type: "edr-simulated",
-			chainType: "11",
+			chainType: "l1",
 
 			forking: {
 				url: "https://ethereum-sepolia-rpc.publicnode.com",
