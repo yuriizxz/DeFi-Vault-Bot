@@ -1,8 +1,11 @@
+use std::time::Duration;
+
 use alloy::{
- network::EthereumWallet, primitives::{Address, U256, address}, providers::ProviderBuilder, signers::local::PrivateKeySigner, sol,
+ network::EthereumWallet, primitives::{Address, U256, address, utils::format_units}, providers::{Provider, ProviderBuilder}, signers::local::PrivateKeySigner, sol,
 };
 
 use eyre::Result;
+use tokio::time::{Interval, interval};
 
 sol!(
     #[sol(rpc)]
@@ -10,11 +13,53 @@ sol!(
     "../artifacts/contracts/TokenVault.sol/TokenVault.json"
     );
 
-sol!(
+
+
+
+sol! {
     #[sol(rpc)]
-    Dilmas,
-    "../artifacts/contracts/Dilmas.sol/Dilmas.json"
-);
+    interface IERC20 {
+        function approve(address spender, uint256 amount) external returns (bool);
+        function balanceOf(address account) external view returns (uint256);
+        function transfer(address to, uint256 amount) external returns (bool);
+        function transferFrom(address from, address to, uint256 amount) external returns (bool);
+        function allowance(address owner, address spender) external view returns (uint256);
+        function decimals() external view returns (uint8);
+    }
+}
+
+sol! {
+    #[sol(rpc)]
+    interface  IPool
+    {
+        function getReserveData(address asset) external view returns (
+            uint256 configuration,
+            uint128 liquidityIndex,
+            uint128 currentLiquidityRate,
+            uint128 variableBorrowIndex,
+            uint128 currentVariableBorrowRate,
+            uint128 currentStableBorrowRate,
+            uint40 lastUpdateTimestamp,
+            uint16 id,
+            address aTokenAddress,
+            address stableDebtTokenAddress,
+            address variableDebtTokenAddress,
+            address interestRateStrategyAddress,
+            uint128 accruedToTreasury,
+            uint128 unbacked,
+            uint128 isolationModeTotalDebt
+        );
+    }
+}
+
+sol! {
+    #[sol(rpc)]
+    interface IAaveOracle {
+        function getAssetPrice(address) external view returns (uint256);
+    }
+}
+
+
 
 
 #[tokio::main]
@@ -37,55 +82,128 @@ async fn main() -> Result<()> {
             .await?;
     
     //instanciando o endereço do contrato TokenVault
-    let vault_address: Address = address!("0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9");
+    let vault_address: Address = address!("0xB4B421f001218d13e2081868A908C33f5488FAF6");
 
     let vault = 
         TokenVault::new(
             vault_address,
             provider.clone()
             );
+    //instancia a USDC para utlizar as funções declaradas na interface ABI  
+        let usdc_address = vault.asset().call().await?;
 
-    //instanciando o endereço do contrato Dilmas
-     let token_address: Address = address!("0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9");
-    
-     let token = 
-        Dilmas::new(
-            token_address,
+        let usdc = IERC20::new(
+            usdc_address,
+            provider.clone()
+            );
+    //instacia pool para conseguir informações da aave
+        let pool_address: Address = address!("0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951");
+        let pool = IPool::new(
+            pool_address,
             provider.clone()
             );
 
-    //Consultando o saldo total do contrato TokenVault chamando a função totalAssets() do contrato inteligente
-    let mut  total_assets = 
-        vault.totalAssets().call().await?;
+        let data = pool.getReserveData(usdc_address).call().await?;
+    //instancia o Oracle para conseguir o preço ETH/USD da Sepolia
+        let aave_oracle: Address = address!("0x2da88497588bf89281816106C7259e31AF45a663");
+        let weth: Address = address!("C558DBdd856501FCd9aaF1E62eae57A9F0629a3c");             let usdc_oracle: Address = address!("0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8");
+        let oracle = IAaveOracle::new(
+            aave_oracle, provider.clone()
+            );
+
+        let price_weth = oracle.getAssetPrice(weth).call().await?;
+        let price_usdc = oracle.getAssetPrice(usdc_oracle).call().await?;
+
+   //     let convert_weth_usdc = price_weth/price_usdc;
+
+    // Loop de 1/2 minuto==============================================================
+    
+        let mut ticker = interval(Duration::from_secs(30));
+
+    loop {
+        ticker.tick().await;
+
+        println!("\n [Novo ciclo de análise do Vault]");
+
+        let total_assets_result = vault.totalAssets().call().await;
+
+        let total_assets = match total_assets_result {
+            Ok(result) => result,
+            Err(e) => {
+                eprintln!("Erro ao ler saldo do cofre: {}", e);
+                continue;
+            }
+        };
+
+        println!("Saldo total atual: {}", total_assets);
+
+
+        //Lógica matemática de rebalance. Só rebalanceia se tiver mais de 1000 tokens
+        let min_limit = U256::from(1000u64) * U256::from(10u64).pow(U256::from(6u64));
+
+
+        if total_assets >= min_limit {
  
-    println!("Total assets in the vault: {}", total_assets);
-    
-    //Consultando o saldo de AÇÕES de um usuário específico chamando a função balanceOf() do contrato inteligente
-    
+            println!("Threshold atingido. Simulando custos de transação...");
 
-    let mut user_shares = vault.balanceOf(user).call().await?;
+        let investimento_usdc = total_assets.checked_mul(U256::from(70)).unwrap().checked_div(U256::from(100)).unwrap();
 
-    println!("User shares: {}", user_shares);
+        let _liquidity_rate = data.currentLiquidityRate;
+       
+        let dias = U256::from(7);
+        let ray = U256::from(10u64).pow(U256::from(27));
 
-    //Fazendo um depósito de token para o contrato e consultando o saldo e balanço de ações do usuário
-    let amount = U256::from(500u64) * U256::from(10u64).pow(U256::from(18u64));
+        let lucro_projetado_usdc = investimento_usdc.checked_mul(U256::from(data.currentLiquidityRate)).unwrap().checked_mul(dias).unwrap().checked_div(U256::from(365) * ray).unwrap();
 
-    let mint_tx = token.mint(user, amount).send().await?;
-    mint_tx.get_receipt().await?;
+        let gas_price = provider.get_gas_price().await?;
+        let gas_limit = (vault.rebalance()).estimate_gas().await?;
+        let gas_cost_wei = U256::from(gas_price).checked_mul(U256::from(gas_limit)).unwrap();       
+       
 
-    let approval = token.approve(vault_address, U256::from(500u64)).send().await?;
-    let _approval_receipt = approval.get_receipt().await?;
-        println!("Approval successful");
+        let gas_cost_usd_bruto = gas_cost_wei.checked_mul(price_weth).unwrap();
 
-    let _tx = vault.deposit(U256::from(500u64), user).send().await?;
+        let divisor_wei = U256::from(10u64).pow(U256::from(18));
 
-  total_assets = 
-        vault.totalAssets().call().await?;
-user_shares = vault.balanceOf(user).call().await?;
+        let gas_cost_usd = gas_cost_usd_bruto.checked_div(divisor_wei).unwrap();
 
-    println!("Total assets in the vault: {}", total_assets);
-    println!("User shares: {}", user_shares);
+        let precisao_oraculo = U256::from(10u64).pow(U256::from(8));
+        let gas_cost_usdc = gas_cost_usd.checked_mul(precisao_oraculo).unwrap().checked_div(price_usdc).unwrap();
 
-    Ok(())
+        let lucro_projetado_normalizado = lucro_projetado_usdc.checked_mul(U256::from(100)).unwrap();
 
+        println!("\n--- 🐞 DEBUG DE DECIMAIS ---");
+println!("1. Lucro Projetado Bruto (6 decimais): {}", lucro_projetado_usdc);
+println!("2. Custo do Gás Bruto (8 decimais):  {}", gas_cost_usdc);
+
+// O format_units coloca a vírgula no lugar certo para humanos lerem
+println!("3. Lucro Real (Visão Humana): ${}", alloy::primitives::utils::format_units(lucro_projetado_usdc, 6).unwrap_or_default());
+println!("4. Custo Real (Visão Humana): ${}", alloy::primitives::utils::format_units(gas_cost_usdc, 8).unwrap_or_default());
+println!("----------------------------\n");
+            if lucro_projetado_normalizado > gas_cost_usdc {
+
+                match vault.rebalance().send().await {
+                     Ok(pending_tx) => {
+                        println!("Transação enviada. Hash:{:?}", pending_tx.tx_hash());
+                         match pending_tx.get_receipt().await {
+                             Ok(receipt) => {
+                                 if receipt.status(){
+                                     println!("Rebalancemento será realizado no bloco: {}", receipt.block_number.unwrap_or_default());
+                                  } else {
+                                     eprintln!("A transação reverteu no contrato");
+                                    }  
+                              },
+                              Err(e) => eprintln!("Erro ao esperar recibo do bloco {}", e),
+                         }
+                 },
+                      Err(e) => {eprintln!("Falha ao tentar enviar transação: {}", e);
+                       }
+                 }
+
+             } else {
+                 println!("O custo do gá corrói o rendimento. Rebalence não será realizado")
+                }
+        } else {
+            println!{"Saldo abaixo do limite. Rebalance não será realizado."}
+        }
+    }
 }

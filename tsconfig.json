@@ -1,11 +1,16 @@
 {
   "compilerOptions": {
-    "lib": ["es2023"],
-    "module": "node20",
+    "lib": [
+      "es2023"
+    ],
+    "module": "commonjs",
     "target": "es2023",
     "skipLibCheck": true,
     "outDir": "dist",
-    "types": ["node"],
-    "verbatimModuleSyntax": true
+    "types": [
+      "node"
+    ],
+    "rootDir": ".",
+    "esModuleInterop": true
   }
 }

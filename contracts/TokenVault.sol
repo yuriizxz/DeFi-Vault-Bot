@@ -15,8 +15,8 @@ import {IPoolDataProvider} from "@aave/core-v3/contracts/interfaces/IPoolDataPro
 contract TokenVault is ERC4626 {
 	
 	IPool public immutable aavePool;
-	IPoolAddressesProvider provider = aavePool.ADDRESSES_PROVIDER();
-	IPoolDataProvider dataProvider = IPoolDataProvider(provider.getPoolDataProvider());
+	IPoolAddressesProvider public immutable provider;
+	IPoolDataProvider public immutable dataProvider;
 	IERC20 public immutable aToken;
 	
 	address public immutable keeper;
@@ -28,10 +28,20 @@ contract TokenVault is ERC4626 {
 	constructor(IERC20 _asset, 
 							IPool _aavePool	
 						 ) ERC4626(_asset) ERC20("USDC Yield Vault", "shareUSDC"){
-								aavePool = _aavePool;
+        aavePool = _aavePool;
 
-							(address tokenAddress,,) = dataProvider.getReserveTokensAddresses(asset());
-							aToken = IERC20(tokenAddress);
+        provider = _aavePool.ADDRESSES_PROVIDER();
+
+        dataProvider = IPoolDataProvider(
+            provider.getPoolDataProvider()
+        );
+
+        (address tokenAddress,,) =
+            dataProvider.getReserveTokensAddresses(address(_asset));
+
+        aToken = IERC20(tokenAddress);
+
+        keeper = msg.sender;
 							}
 
 
