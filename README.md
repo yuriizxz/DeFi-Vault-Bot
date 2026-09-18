@@ -1,10 +1,11 @@
-
-# DeFi Vault + bot Keeper 
+<div align="center">
+  <h1>DeFi Vault + Rust Bot Keeper</h1>
+</div>
 
 ## Descrição do Projeto
 Este projeto consiste em um ecossistema descentralizado composto por um cofre de contratos inteligentes (Vault) e um bot off-chain (Keeper). O objetivo do sistema é monitorar fundos ociosos em USDC depositados pelos usuários e realocá-los autonomamente no protocolo Aave V3 para geração de rendimentos (yield), executando o rebalanceamento apenas quando a operação for matematicamente lucrativa.
 
-Este repositório demonstra a integração completa entre infraestrutura blockchain (EVM), desenvolvimento de contratos inteligentes e programação de sistemas assíncronos.
+Este repositório demonstra a integração completa entre infraestrutura blockchain (EVM), desenvolvimento de contratos inteligentes e programação de sistemas assíncronos. Feito principalmete para estudar e praticar! :smile:
 
 ## Arquitetura do Sistema
 O projeto é dividido em dois componentes principais:
@@ -58,3 +59,6 @@ Em um terminal secundário, execute a suíte de testes para simular os depósito
 ```bash
 npx hardhat test test/E2E_Vault.test.js --network localhost
 ```
+
+## Trabalho Futuro
+  Introduzir um banco de dados SQLite para aumentar a autonomia do sistema. Implementar de modo a ser capaz de realizar uma auditoria rápida, manter um Track Record, gerar métricas e relatórios.
