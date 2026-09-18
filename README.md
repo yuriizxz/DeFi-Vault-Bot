@@ -50,7 +50,7 @@ Preencha as variáveis indicadas. Recomendado: Private Key do user 0 gerado pelo
 
 ### 5. Iniciar o Keeper Bot (Rust)
 ```bash
-cargo run
+cargo run --manifest-path rust/Cargo.toml
 ```
 
 ### 6. Executar os testes E2E
