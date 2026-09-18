@@ -64,6 +64,7 @@ sol! {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    dotenvy::dotenv().ok();
     let signer: PrivateKeySigner = std::env::var("PRIVATE_KEY")?.parse()?;
 
     let user: Address = signer.address();

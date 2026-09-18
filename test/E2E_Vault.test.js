@@ -109,8 +109,9 @@ describe("Vault E2E: Testando o motor autônomo do Keeper em Rust", function () 
     console.log(`    ✅ O Bot agiu! Saldo ocioso restante no cofre: ${ethers.formatUnits(idleAssets, 6)} USDC`);
 
     const totalAssets = await vault.totalAssets();
-    expect(totalAssets).to.be.gte(DEPOSIT_AMOUNT, "O totalAssets quebrou após o rebalanceamento");
-  });
+    const tolerancia = 5n; 
+		expect(totalAssets).to.be.gte(DEPOSIT_AMOUNT - tolerancia, "O totalAssets caiu além do erro de arredondamento esperado");
+	});
 
   it("3. O usuário realiza o saque com sucesso", async function () {
     const userShares = await vault.balanceOf(user1.address);
