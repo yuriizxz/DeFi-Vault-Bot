@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { expect } = require("chai");
 const { ethers, network } = require("hardhat");
 
@@ -9,7 +10,10 @@ describe("Vault E2E: Testando o motor autônomo do Keeper em Rust", function () 
   let user1;  
 
   // === ATENÇÃO: COLOQUE SEU NOVO ENDEREÇO AQUI SE NECESSÁRIO ===
-  const VAULT_ADDRESS = "0xB4B421f001218d13e2081868A908C33f5488FAF6";
+  const VAULT_ADDRESS = process.env.VAULT_ADDRESS;
+	if (!VAULT_ADDRESS){
+		throw new Error("VAULT_ADDRESS não definido no .env");
+	}
   
   const DEPOSIT_AMOUNT = ethers.parseUnits("50000", 6);
 

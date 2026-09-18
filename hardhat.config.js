@@ -1,5 +1,7 @@
 require("@nomicfoundation/hardhat-toolbox");
 
+require("dotenv").config();
+
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
@@ -12,7 +14,7 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url:"https://sepolia.infura.io/v3/d22344b667934bfea9db8d5f6d3d6eaa",
+        url: process.env.SEPOLIA_RPC_URL,
 			blockNumber: 5500000
 			}
     },

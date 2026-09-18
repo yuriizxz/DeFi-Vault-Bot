@@ -82,7 +82,8 @@ async fn main() -> Result<()> {
             .await?;
     
     //instanciando o endereço do contrato TokenVault
-    let vault_address: Address = address!("0xB4B421f001218d13e2081868A908C33f5488FAF6");
+    let vault_address = std::env::var("VAULT_ADDRESS").expect("VAULT_ADDRESS não econtrado no .env");
+    let vault_address: Address = vault_address.parse().expect("Endereço VAULT_ADDRESS inválido");
 
     let vault = 
         TokenVault::new(
@@ -106,7 +107,8 @@ async fn main() -> Result<()> {
         let data = pool.getReserveData(usdc_address).call().await?;
     //instancia o Oracle para conseguir o preço ETH/USD da Sepolia
         let aave_oracle: Address = address!("0x2da88497588bf89281816106C7259e31AF45a663");
-        let weth: Address = address!("C558DBdd856501FCd9aaF1E62eae57A9F0629a3c");             let usdc_oracle: Address = address!("0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8");
+        let weth: Address = address!("C558DBdd856501FCd9aaF1E62eae57A9F0629a3c"); 
+        let usdc_oracle: Address = address!("0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8");
         let oracle = IAaveOracle::new(
             aave_oracle, provider.clone()
             );
