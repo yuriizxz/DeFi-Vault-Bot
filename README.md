@@ -1,3 +1,4 @@
+
 # DeFi Vault + bot Keeper 
 
 ## Descrição do Projeto
@@ -40,14 +41,19 @@ npx hardhat node
 ```bash
 npx hardhat run scripts/deploy.ts --network localhost
 ```
+### 4. Configurar as variáveis de ambiente
+Crie o arquivo .env a partir do modelo:
+```bash
+cp .env.example .env
+```
+Preencha as variáveis indicadas. Recomendado: Private Key do user 0 gerado pelo hardhat e Vault address gerado anteriormente pelo deploy.
 
-### 4. Iniciar o Keeper Bot (Rust)
-Configure as variáveis de ambiente necessárias (como `PRIVATE_KEY`) e execute:
+### 5. Iniciar o Keeper Bot (Rust)
 ```bash
 cargo run
 ```
 
-### 5. Executar os testes E2E
+### 6. Executar os testes E2E
 Em um terminal secundário, execute a suíte de testes para simular os depósitos e a atuação autônoma do bot:
 ```bash
 npx hardhat test test/E2E_Vault.test.js --network localhost
